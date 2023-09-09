@@ -25,8 +25,7 @@ const userSchema = new mongoose.Schema({
     minlength: 6, // You can adjust this based on your security requirements
   },
   decryptionKey: {
-    type: String,
-    required: true, // You may adjust the required flag based on your application's requirements
+    type: String,// You may adjust the required flag based on your application's requirements
   },
   // You can add more fields as needed, such as name, profile picture URL, etc.
 });

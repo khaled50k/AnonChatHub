@@ -132,13 +132,14 @@ async function getAllUserMessagesDecrypted(req, res) {
     // Retrieve encrypted messages for the user and populate the sender field
     const encryptedMessages = await Message.find({
       recipient: user._id,
-    }).populate({
-      path: "sender",
-      select: "_id username", // Select only the necessary fields from the sender
-    });
-    // Fetch the recipient's decryption key from the user model
-    const recipientUser = await User.findById(user._id);
-    const recipientDecryptionKey = recipientUser.decryptionKey;
+    })
+      .populate({
+        path: "sender",
+        select: "_id username", // Select only the necessary fields from the sender
+      })
+      .populate("recipient", "_id decryptionKey");
+    const recipientDecryptionKey =
+      encryptedMessages[0]?.recipient.decryptionKey;
 
     // Decrypt and format the messages
     const decryptedMessages = encryptedMessages.map((message) => {
