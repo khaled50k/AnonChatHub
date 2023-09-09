@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
   username: {
@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema({
       validator: (value) => {
         return /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(value);
       },
-      message: 'Invalid email format',
+      message: "Invalid email format",
     },
   },
   password: {
@@ -24,9 +24,13 @@ const userSchema = new mongoose.Schema({
     required: true,
     minlength: 6, // You can adjust this based on your security requirements
   },
+  decryptionKey: {
+    type: String,
+    required: true, // You may adjust the required flag based on your application's requirements
+  },
   // You can add more fields as needed, such as name, profile picture URL, etc.
 });
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model("User", userSchema);
 
 module.exports = User;

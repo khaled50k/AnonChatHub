@@ -1,5 +1,23 @@
 const Message = require("../models/Message"); // Import your message model
+const User = require("../models/User"); // Import your user model
 const messageSchema = require("../validation/messageSchema");
+const crypto = require("crypto"); // Import the crypto module
+// Function to encrypt a message
+function encryptMessage(message, key) {
+  const cipher = crypto.createCipher("aes-256-cbc", key);
+  let encryptedMessage = cipher.update(message, "utf8", "hex");
+  encryptedMessage += cipher.final("hex");
+  return encryptedMessage;
+}
+
+// Function to decrypt a message
+function decryptMessage(encryptedMessage, key) {
+  const decipher = crypto.createDecipher("aes-256-cbc", key);
+  let decryptedMessage = decipher.update(encryptedMessage, "hex", "utf8");
+  decryptedMessage += decipher.final("utf8");
+  return decryptedMessage;
+}
+
 // Controller for creating a new encrypted message
 async function createEncryptedMessage(req, res) {
   try {
@@ -23,23 +41,16 @@ async function createEncryptedMessage(req, res) {
     }
 
     const { content, recipient } = value;
+    // Fetch the recipient's decryption key from the user model
+    const recipientUser = await User.findById(recipient);
+    const recipientDecryptionKey = recipientUser.decryptionKey;
 
-    // Simulate key exchange (you should have recipient's public key)
-    const recipientPublicKey = fetchRecipientPublicKey(recipient); // Implement this function to retrieve recipient's public key
+    // Encrypt the message content using the recipient's decryption key
+    const encryptedContent = encryptMessage(content, recipientDecryptionKey);
 
-    if (!recipientPublicKey) {
-      return res.status(404).json({ error: "Recipient public key not found" });
-    }
-
-    // Encrypt the message content using the recipient's public key
-    const encryptedContent = crypto.publicEncrypt(
-      recipientPublicKey,
-      Buffer.from(content, "utf8")
-    );
-
-    // Create a new message using the encrypted content and the senderId
+    // Create a new message using the encrypted chunks, senderId, and recipient
     const newMessage = new Message({
-      content: encryptedContent.toString("base64"),
+      content: encryptedContent,
       sender: senderId,
       recipient: recipient,
     });
@@ -113,25 +124,38 @@ async function deleteMessage(req, res) {
     console.error(error);
     res.status(500).json({ error: "Message deletion failed" });
   }
-}
-// Controller for getting and decrypting messages for a specific user (recipient)
+} // Controller for getting and decrypting messages for a specific user (recipient)
 async function getAllUserMessagesDecrypted(req, res) {
   try {
-    const userId = req.params.userId; // Assuming you have a route parameter for the user ID
+    const user = req.session.user; // Assuming you have a route parameter for the user ID
 
-    // Retrieve encrypted messages for the user
-    const encryptedMessages = await Message.find({ recipient: userId });
+    // Retrieve encrypted messages for the user and populate the sender field
+    const encryptedMessages = await Message.find({
+      recipient: user._id,
+    }).populate({
+      path: "sender",
+      select: "_id username", // Select only the necessary fields from the sender
+    });
+    // Fetch the recipient's decryption key from the user model
+    const recipientUser = await User.findById(user._id);
+    const recipientDecryptionKey = recipientUser.decryptionKey;
 
     // Decrypt and format the messages
     const decryptedMessages = encryptedMessages.map((message) => {
-      const decryptedContent = crypto.privateDecrypt(
-        req.user.privateKey, // Assuming you have the user's private key in req.user
-        Buffer.from(message.content, "base64")
-      );
+      const sender = message.sender
+        ? {
+            _id: message.sender._id,
+            username: message.sender.username,
+          }
+        : null; // Extract the sender's data if it exists
 
+      const decryptedContent = decryptMessage(
+        message.content,
+        recipientDecryptionKey
+      );
       return {
-        content: decryptedContent.toString("utf8"),
-        // Include other message properties like timestamps, message ID, etc.
+        content: decryptedContent,
+        sender: sender, // Include the sender if it exists
       };
     });
 
@@ -143,7 +167,7 @@ async function getAllUserMessagesDecrypted(req, res) {
 }
 
 module.exports = {
-    createEncryptedMessage,
+  createEncryptedMessage,
   updateMessage,
   getAllMessages,
   deleteMessage,

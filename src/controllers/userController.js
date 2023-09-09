@@ -1,6 +1,7 @@
 const User = require("../models/User"); // Import your user model
 const Joi = require("joi");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto"); // Import the crypto module
 const userSchema = require("../validation/userSchema");
 
 // Controller for user registration
@@ -20,14 +21,18 @@ async function registerUser(req, res) {
       return res.status(400).json({ error: "Email is already registered" });
     }
 
+    // Generate a unique decryption key for the user
+    const decryptionKey = crypto.randomBytes(32).toString("hex");
+
     // Hash the password before saving it to the database
     const hashedPassword = await bcrypt.hash(value.password, 10);
 
-    // Create a new user using the validated data and hashed password
+    // Create a new user using the validated data, hashed password, and decryption key
     const newUser = new User({
       username: value.username,
       email: value.email,
       password: hashedPassword,
+      decryptionKey: decryptionKey, // Store the decryption key
       // Add other user properties here
     });
     await newUser.save();
@@ -38,6 +43,7 @@ async function registerUser(req, res) {
     res.status(500).json({ error: "User registration failed" });
   }
 }
+
 
 // Controller for user login
 async function loginUser(req, res) {
@@ -65,7 +71,7 @@ async function loginUser(req, res) {
       username: user.username,
       // Add other non-sensitive user properties here
     };
-
+    req.session.authenticated = true;
     res.json({ message: "Login successful", user: req.session.user });
   } catch (error) {
     console.error(error);
