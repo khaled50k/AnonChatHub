@@ -164,6 +164,7 @@ module.exports = {
   registerUser,
   loginUser,
   resetPassword,
-  requestPasswordReset,logoutUser
+  requestPasswordReset,
+  logoutUser,
   // Add other authentication-related functions here
 };

@@ -55,7 +55,7 @@ async function createEncryptedMessage(req, res) {
       recipient: recipient,
     });
     await newMessage.save();
-
+   
     res.status(201).json({ message: "Encrypted message created successfully" });
   } catch (error) {
     console.error(error);
