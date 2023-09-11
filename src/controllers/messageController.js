@@ -21,16 +21,17 @@ function decryptMessage(encryptedMessage, key) {
 // Controller for creating a new encrypted message
 async function createEncryptedMessage(req, res) {
   try {
+    const {senderId}=req?.params
     // Check if a user is authenticated (you can use your authentication middleware)
-    const authenticatedUser = req.session; // Replace this with your authentication logic
-    let senderId;
+    // const authenticatedUser = req.session; // Replace this with your authentication logic
 
-    if (authenticatedUser.authenticated) {
-      // If authenticated, use the user's ID as the sender
-      senderId = authenticatedUser.user._id;
-    } else {
-      // If not authenticated, senderId will remain undefined (or null)
-    }
+
+    // if (authenticatedUser.authenticated) {
+    //   // If authenticated, use the user's ID as the sender
+    //   // senderId = authenticatedUser.user._id;
+    // } else {
+    //   // If not authenticated, senderId will remain undefined (or null)
+    // }
 
     // Validate message input
     const { error, value } = messageSchema.validate(req.body);

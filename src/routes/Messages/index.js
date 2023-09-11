@@ -4,7 +4,7 @@ const messageControllers = require('../../controllers/messageController');
 const authMiddleware = require('../../middleware/validateSession'); // Import your authentication middleware
 
 // Create a new encrypted message
-router.post('/', messageControllers.createEncryptedMessage);
+router.post('/:senderId?', messageControllers.createEncryptedMessage);
 
 // Update a message by ID
 router.put('/:id', messageControllers.updateMessage);
@@ -16,6 +16,6 @@ router.get('/', messageControllers.getAllMessages);
 router.delete('/:id', messageControllers.deleteMessage);
 
 // Get and decrypt messages for a specific user (recipient) by user ID
-router.get('/user-messages/:userId', authMiddleware, messageControllers.getAllUserMessagesDecrypted);
+router.get('/user-messages', authMiddleware, messageControllers.getAllUserMessagesDecrypted);
 
 module.exports = router;
